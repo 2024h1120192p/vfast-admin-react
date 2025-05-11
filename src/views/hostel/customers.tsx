@@ -16,7 +16,7 @@ const CustomersPage: React.FC = () => {
   const roomTypeOrder = ['Standard', 'Deluxe', 'Executive'];
   // Split active and past customers
   const activeCustomers = customerData.filter(c =>
-    reservationData.some(r => r.guest === c.name && (r.status === 'Reserved' || r.status === 'Checked-In'))
+    reservationData.some(r => r.guest === c.name && (r.status === 'Reserved' || r.status === 'CheckedIn'))
   );
   const pastCustomers = customerData.filter(c => !activeCustomers.includes(c));
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -47,8 +47,10 @@ const CustomersPage: React.FC = () => {
     { title: 'Email', dataIndex: 'email', key: 'email' },
     { title: 'Phone', dataIndex: 'phone', key: 'phone' },
     { title: 'Rooms', key: 'rooms', render: (_: any, record: Customer) => {
-        const res = reservationData.find(r => r.guest === record.name && (r.status === 'Reserved' || r.status === 'Checked-In'));
-        return res ? res.rooms.join(', ') : record.room.toString();
+        // Show all rooms ever assigned to this customer
+        const resList = reservationData.filter(r => r.guest === record.name);
+        const allRooms = Array.from(new Set(resList.flatMap(r => r.rooms)));
+        return allRooms.length ? allRooms.join(', ') : record.room.toString();
       }
     },
     {
@@ -66,27 +68,26 @@ const CustomersPage: React.FC = () => {
 
   // Columns without action for past customers, with Reservation Id
   const pastColumns = [
+    { title: 'Name', dataIndex: 'name', key: 'name' },
+    { title: 'Email', dataIndex: 'email', key: 'email' },
+    { title: 'Phone', dataIndex: 'phone', key: 'phone' },
+    { title: 'Rooms', key: 'rooms', render: (_: any, record: Customer) => {
+        const resList = reservationData.filter(r => r.guest === record.name);
+        const allRooms = Array.from(new Set(resList.flatMap(r => r.rooms)));
+        return allRooms.length ? allRooms.join(', ') : record.room.toString();
+      }
+    },
     {
       title: 'Reservation ID',
       dataIndex: 'reservationId',
       key: 'reservationId',
       render: (_: any, record: Customer) => {
         const res = reservationData
-          .filter(r => r.guest === record.name && (r.status === 'Checked-Out' || r.status === 'Cancelled'))
+          .filter(r => r.guest === record.name && (r.status === 'CheckedOut' || r.status === 'Cancelled'))
           .sort((a, b) => (a.from < b.from ? 1 : -1))[0];
         return res ? res.id : '-';
       }
     },
-    {
-      title: 'Rooms',
-      key: 'rooms',
-      render: (_: any, record: Customer) => {
-        const res = reservationData.find(r => r.guest === record.name && (r.status === 'Checked-Out' || r.status === 'Cancelled'));
-        return res ? res.rooms.join(', ') : '-';
-      }
-    },
-    // ...existing columns except 'action'
-    ...columns.filter(col => col.key !== 'action')
   ];
 
   // Handler to open modal for shifting room

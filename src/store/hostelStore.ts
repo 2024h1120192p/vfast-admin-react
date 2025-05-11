@@ -13,7 +13,7 @@ export type Reservation = {
   guest: string;
   from: string;
   to: string;
-  status: 'Reserved' | 'Checked-In' | 'Checked-Out' | 'Cancelled';
+  status: 'Reserved' | 'CheckedIn' | 'CheckedOut' | 'Cancelled' | 'Pending';
   cancellationReason?: string;
 };
 export type ReservationRequest = {
@@ -72,7 +72,7 @@ const initialRooms: Room[] = [
 ];
 const initialReservations: Reservation[] = [
   { id: 'res1', rooms: [101], guest: 'John Doe', from: '2025-05-10', to: '2025-05-12', status: 'Reserved' },
-  { id: 'res2', rooms: [201], guest: 'Jane Smith', from: '2025-05-09', to: '2025-05-13', status: 'Checked-In' },
+  { id: 'res2', rooms: [201], guest: 'Jane Smith', from: '2025-05-09', to: '2025-05-13', status: 'CheckedIn' },
   { id: 'res3', rooms: [302], guest: 'Alice Brown', from: '2025-05-11', to: '2025-05-15', status: 'Reserved' },
 ];
 // initial reservation requests (sample)
@@ -257,7 +257,7 @@ const useHostelStore = create<HostelState>((set) => ({
     set(state => {
       const updatedReservations = state.reservations.map(r =>
         r.rooms.includes(room) && r.guest === guest && r.status === 'Reserved'
-          ? { ...r, status: 'Checked-In' }
+          ? { ...r, status: 'CheckedIn' }
           : r
       );
       const updatedRooms = state.rooms.map(r =>
@@ -271,8 +271,8 @@ const useHostelStore = create<HostelState>((set) => ({
   checkOutReservation: (room, guest) => {
     set(state => {
       const updatedReservations = state.reservations.map(r =>
-        r.rooms.includes(room) && r.guest === guest && r.status === 'Checked-In'
-          ? { ...r, status: 'Checked-Out' }
+        r.rooms.includes(room) && r.guest === guest && r.status === 'CheckedIn'
+          ? { ...r, status: 'CheckedOut' }
           : r
       );
       const updatedRooms = state.rooms.map(r =>
@@ -286,7 +286,7 @@ const useHostelStore = create<HostelState>((set) => ({
   cancelReservation: (room, guest, reason) => {
     set(state => {
       const updatedReservations = state.reservations.map(r =>
-        r.rooms.includes(room) && r.guest === guest && (r.status === 'Reserved' || r.status === 'Checked-In')
+        r.rooms.includes(room) && r.guest === guest && (r.status === 'Reserved' || r.status === 'CheckedIn')
           ? { ...r, status: 'Cancelled', cancellationReason: reason }
           : r
       );

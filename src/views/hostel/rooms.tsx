@@ -46,6 +46,7 @@ const RoomsPage: React.FC = () => {
         if (status === 'Occupied') color = 'red';
         if (status === 'Maintenance') color = 'grey';
         if (status === 'On-Hold') color = 'darkorange';
+        if (status === 'Booked') color = 'darkorange';
         return <Tag color={color}>{status}</Tag>;
       },
     },

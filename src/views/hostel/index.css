@@ -52,3 +52,16 @@
 .reservations-table-container .ant-table table {
   table-layout: fixed;
 }
+
+/* Reservation request styling */
+.request-actions-container {
+  margin-bottom: 16px;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.request-note {
+  color: rgba(0, 0, 0, 0.45);
+  margin-left: 8px;
+}
