@@ -1,0 +1,466 @@
+openapi: 3.1.0
+info:
+  title: VFAST Hotel Booking System
+  version: 0.1.0
+  description: |
+    REST API for managing guest-house operations:
+    • Admin and user authentication (login, OTP, Google Auth)  
+    • Booking lifecycle (availability, requests, confirmation, dashboard)  
+    • Room management (status, availability, types)  
+    • Reporting (occupancy, activity logs)
+
+servers:
+  - url: /api/v1
+    description: Base path for all VFAST API endpoints
+
+paths:
+  /admin/login:
+    post:
+      tags: [Admin Auth]
+      summary: Admin login with username/password
+      description: |
+        Accepts JSON credentials and returns an access token
+        on valid admin user authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: LoginRequest
+      responses:
+        '200':
+          description: Access token issued successfully
+        '422':
+          description: Input validation failed
+          content:
+            application/json:
+              schema: HTTPValidationError
+
+  /admin/verify-otp:
+    post:
+      tags: [Admin Auth]
+      summary: Verify admin one-time password (OTP)
+      description: |
+        After login, admin must verify OTP sent via email/SMS.
+        Secured endpoint; requires valid bearer token.
+      security: [ OAuth2PasswordBearer: [] ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: VerifyOtpRequest
+      responses:
+        '200':
+          description: OTP verified, session confirmed
+        '422':
+          description: Invalid or expired OTP
+          content:
+            application/json:
+              schema: HTTPValidationError
+
+  /admin/gauth:
+    post:
+      tags: [Admin Auth]
+      summary: Admin Google OAuth authentication
+      description: |
+        Accepts Google-issued token as query parameter.
+        Issues internal access token on successful verification.
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+            description: Google OAuth ID token
+      responses:
+        '200':
+          description: Access token issued
+        '422':
+          description: Invalid token format or verification failure
+          content:
+            application/json:
+              schema: HTTPValidationError
+
+  /user/login:
+    post:
+      tags: [User Auth]
+      summary: User login with credentials
+      description: |
+        Allows standard users to authenticate with username/password.
+        Returns an OAuth2 access token on success.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: LoginRequest
+      responses:
+        '200':
+          description: Access token issued successfully
+        '422':
+          description: Validation error on input
+          content:
+            application/json:
+              schema: HTTPValidationError
+
+  /user/verify-otp:
+    post:
+      tags: [User Auth]
+      summary: Verify user OTP after login
+      description: |
+        Secured endpoint for verifying the OTP sent to user.
+        Requires bearer token issued by /user/login.
+      security: [ OAuth2PasswordBearer: [] ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: VerifyOtpRequest
+      responses:
+        '200':
+          description: OTP verification successful
+        '422':
+          description: OTP invalid or expired
+          content:
+            application/json:
+              schema: HTTPValidationError
+
+  /user/gauth:
+    post:
+      tags: [User Auth]
+      summary: User Google OAuth authentication
+      description: |
+        Exchange Google token for internal access token.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: GAuthRequest
+      responses:
+        '200':
+          description: Access token issued
+        '422':
+          description: Invalid Google token
+          content:
+            application/json:
+              schema: HTTPValidationError
+
+  /user/google-sign-in:
+    get:
+      tags: [User Auth]
+      summary: Redirect URL for Google sign-in flow
+      description: |
+        Initiates OAuth2 consent screen; returns redirect URL
+        or authorization code exchange details.
+      responses:
+        '200':
+          description: URL or token details returned
+
+  /booking/availability:
+    get:
+      tags: [Bookings]
+      summary: Fetch room availability calendar
+      description: |
+        Returns date-wise count of booked vs available rooms
+        between given start and end dates.
+      security: [ OAuth2PasswordBearer: [] ]
+      parameters:
+        - name: start
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+            description: Start date (YYYY-MM-DD)
+        - name: end
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+            description: End date (YYYY-MM-DD)
+      responses:
+        '200':
+          description: Availability data array
+        '422':
+          description: Date parsing or validation error
+          content:
+            application/json:
+              schema: HTTPValidationError
+
+  /booking/booking-request:
+    post:
+      tags: [Bookings]
+      summary: User requests a new booking
+      description: |
+        Creates a pending booking request with guest details,
+        dates, room type and pax. Admin must confirm later.
+      security: [ OAuth2PasswordBearer: [] ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: BookingRequestRequest
+      responses:
+        '200':
+          description: Request created, awaiting approval
+        '422':
+          description: Validation error on booking data
+          content:
+            application/json:
+              schema: HTTPValidationError
+
+  /booking/confirm-booking:
+    post:
+      tags: [Bookings]
+      summary: Admin confirms or rejects booking
+      description: |
+        Admin action to approve or reject a pending booking.
+        Provides assigned room list or rejection reason.
+      security: [ OAuth2PasswordBearer: [] ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: ConfirmBookingRequest
+      responses:
+        '200':
+          description: Booking status updated
+        '422':
+          description: Missing fields or invalid IDs
+          content:
+            application/json:
+              schema: HTTPValidationError
+
+  /booking/booking-dashboard:
+    get:
+      tags: [Bookings]
+      summary: Dashboard summary for bookings
+      description: |
+        Returns overall counts and quick stats for a given date.
+        Used by front-end widgets.
+      security: [ OAuth2PasswordBearer: [] ]
+      parameters:
+        - name: req_date
+          in: query
+          schema:
+            type: string
+            format: date
+            description: Optional date filter
+      responses:
+        '200':
+          description: Dashboard metrics object
+        '422':
+          description: Invalid date format
+          content:
+            application/json:
+              schema: HTTPValidationError
+
+  /booking/booking-statistics:
+    get:
+      tags: [Bookings]
+      summary: Detailed booking statistics
+      description: |
+        Returns time-series or aggregated stats (e.g. weekly,
+        monthly) for bookings on a given date filter.
+      security: [ OAuth2PasswordBearer: [] ]
+      parameters:
+        - name: req_date
+          in: query
+          schema:
+            type: string
+            description: Date for which to compute stats
+      responses:
+        '200':
+          description: Statistics payload
+        '422':
+          description: Validation error
+
+  /booking/booking-requests:
+    get:
+      tags: [Bookings]
+      summary: List pending booking requests
+      description: |
+        Returns all unconfirmed requests optionally filtered by date.
+      security: [ OAuth2PasswordBearer: [] ]
+      parameters:
+        - name: req_date
+          in: query
+          schema:
+            type: string
+            description: Filter by request date
+      responses:
+        '200':
+          description: Array of booking request objects
+        '422':
+          description: Validation error
+
+  /booking/user-bookings:
+    get:
+      tags: [Bookings]
+      summary: Fetch bookings for current user
+      description: |
+        Returns past and upcoming bookings associated with
+        the authenticated user.
+      security: [ OAuth2PasswordBearer: [] ]
+      responses:
+        '200':
+          description: User booking list
+
+  /booking/booking-action:
+    post:
+      tags: [Bookings]
+      summary: Perform action on a booking (e.g. cancel)
+      description: |
+        Allows user or admin to cancel or modify a booking.
+      security: [ OAuth2PasswordBearer: [] ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: BookingActionRequest
+      responses:
+        '200':
+          description: Action applied successfully
+        '422':
+          description: Invalid action or booking ID
+          content:
+            application/json:
+              schema: HTTPValidationError
+
+  /rooms/all-status:
+    get:
+      tags: [Rooms]
+      summary: Get status of all rooms
+      description: |
+        Returns each room’s current occupancy state for a given date.
+      parameters:
+        - name: req_date
+          in: query
+          schema:
+            type: string
+            format: date
+            description: Date to check status for
+      responses:
+        '200':
+          description: List of room status objects
+        '422':
+          description: Date validation error
+          content:
+            application/json:
+              schema: HTTPValidationError
+
+  /rooms/available-rooms:
+    post:
+      tags: [Rooms]
+      summary: Find available rooms by type and date
+      description: |
+        Returns room IDs and numbers that meet the requested
+        type and date window.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: GetRoomsRequest
+      responses:
+        '200':
+          description: Array of available Room objects
+        '422':
+          description: Input validation failed
+          content:
+            application/json:
+              schema: HTTPValidationError
+
+  /rooms/room-types:
+    get:
+      tags: [Rooms]
+      summary: List all room type options
+      description: |
+        Returns master data of room types (Standard, Deluxe, etc.)
+        for form dropdowns.
+      responses:
+        '200':
+          description: Array of type strings
+
+  /reports/occupancy:
+    get:
+      tags: [Reports]
+      summary: Generate occupancy report
+      description: |
+        Aggregated report on room occupancy between dates.
+      parameters:
+        - name: start
+          in: query
+          schema:
+            type: string
+            format: date
+            description: Start date
+        - name: end
+          in: query
+          schema:
+            type: string
+            format: date
+            description: End date
+      responses:
+        '200':
+          description: Occupancy metrics
+        '422':
+          description: Invalid date range
+
+  /reports/logs:
+    get:
+      tags: [Reports]
+      summary: Fetch activity logs report
+      description: |
+        Returns system logs (booking, login, errors) within
+        the specified time window.
+      parameters:
+        - name: start
+          in: query
+          schema:
+            type: string
+            format: date
+            description: Start date
+        - name: end
+          in: query
+            format: date
+            description: End date
+      responses:
+        '200':
+          description: Array of log entries
+        '422':
+          description: Validation error
+
+components:
+  schemas:
+    LoginRequest:
+      type: object
+      description: { username: string, password: string }
+    VerifyOtpRequest:
+      type: object
+      description: { otp: string }
+    GAuthRequest:
+      type: object
+      description: { token: string }
+    BookingRequestRequest:
+      type: object
+      description: |
+        guest info, stay dates, room type and pax count
+    ConfirmBookingRequest:
+      type: object
+      description: |
+        booking_id, status (approve/reject), rooms array, optional reason
+    BookingActionRequest:
+      type: object
+      description: { booking_id: string, action: string }
+    GetRoomsRequest:
+      type: object
+      description: { type: string, check_in: date, check_out: date }
+    HTTPValidationError:
+      type: object
+      description: Standard validation error schema
+
+  securitySchemes:
+    OAuth2PasswordBearer:
+      type: oauth2
+      flows:
+        password:
+          tokenUrl: /api/v1/user/login

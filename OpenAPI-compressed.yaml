@@ -1,0 +1,202 @@
+openapi: 3.1.0
+servers:
+  - url: /api/v1
+
+paths:
+  /admin/login:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginRequest' }
+      responses:
+        '200': { description: 'OK' }
+        '422': { description: 'Validation Error' }
+
+  /admin/verify-otp:
+    post:
+      parameters:
+        - name: Authorization; in: header; required: true; schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/VerifyOtpRequest' }
+      responses:
+        '200': { description: 'OK' }
+        '422': { description: 'Validation Error' }
+
+  /admin/gauth:
+    post:
+      parameters:
+        - name: token; in: query; required: true; schema: { type: string }
+      responses:
+        '200': { description: 'OK' }
+        '422': { description: 'Validation Error' }
+
+  /user/login:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginRequest' }
+      responses:
+        '200': { description: 'OK' }
+        '422': { description: 'Validation Error' }
+
+  /user/verify-otp:
+    post:
+      parameters:
+        - name: Authorization; in: header; required: true; schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/VerifyOtpRequest' }
+      responses:
+        '200': { description: 'OK' }
+        '422': { description: 'Validation Error' }
+
+  /user/gauth:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/GAuthRequest' }
+      responses:
+        '200': { description: 'OK' }
+        '422': { description: 'Validation Error' }
+
+  /user/google-sign-in:
+    get:
+      responses:
+        '200': { description: 'OK' }
+
+  /booking/availability:
+    get:
+      parameters:
+        - name: start; in: query; required: true; schema: { type: string }
+        - name: end;   in: query; required: true; schema: { type: string }
+        - name: Authorization; in: header; required: true; schema: { type: string }
+      responses:
+        '200': { description: 'OK' }
+        '422': { description: 'Validation Error' }
+
+  /booking/booking-request:
+    post:
+      parameters:
+        - name: Authorization; in: header; required: true; schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/BookingRequestRequest' }
+      responses:
+        '200': { description: 'OK' }
+        '422': { description: 'Validation Error' }
+
+  /booking/confirm-booking:
+    post:
+      parameters:
+        - name: Authorization; in: header; required: true; schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ConfirmBookingRequest' }
+      responses:
+        '200': { description: 'OK' }
+        '422': { description: 'Validation Error' }
+
+  /booking/booking-dashboard:
+    get:
+      parameters:
+        - name: req_date; in: query; schema: { type: string }
+        - name: Authorization; in: header; required: true; schema: { type: string }
+      responses:
+        '200': { description: 'OK' }
+        '422': { description: 'Validation Error' }
+
+  /booking/booking-statistics:
+    get:
+      parameters:
+        - name: req_date; in: query; schema: { type: string }
+        - name: Authorization; in: header; required: true; schema: { type: string }
+      responses:
+        '200': { description: 'OK' }
+        '422': { description: 'Validation Error' }
+
+  /booking/booking-requests:
+    get:
+      parameters:
+        - name: req_date; in: query; schema: { type: string }
+        - name: Authorization; in: header; required: true; schema: { type: string }
+      responses:
+        '200': { description: 'OK' }
+        '422': { description: 'Validation Error' }
+
+  /booking/user-bookings:
+    get:
+      parameters:
+        - name: Authorization; in: header; required: true; schema: { type: string }
+      responses:
+        '200': { description: 'OK' }
+
+  /booking/booking-action:
+    post:
+      parameters:
+        - name: Authorization; in: header; required: true; schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/BookingActionRequest' }
+      responses:
+        '200': { description: 'OK' }
+        '422': { description: 'Validation Error' }
+
+  /rooms/all-status:
+    get:
+      parameters:
+        - name: req_date; in: query; schema: { type: string }
+      responses:
+        '200': { description: 'OK' }
+        '422': { description: 'Validation Error' }
+
+  /rooms/available-rooms:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/GetRoomsRequest' }
+      responses:
+        '200': { description: 'OK' }
+        '422': { description: 'Validation Error' }
+
+  /rooms/room-types:
+    get:
+      responses:
+        '200': { description: 'OK' }
+
+  /reports/occupancy:
+    get:
+      parameters:
+        - name: start; in: query; schema: { type: string }
+        - name: end;   in: query; schema: { type: string }
+      responses:
+        '200': { description: 'OK' }
+        '422': { description: 'Validation Error' }
+
+  /reports/logs:
+    get:
+      parameters:
+        - name: start; in: query; schema: { type: string }
+        - name: end;   in: query; schema: { type: string }
+      responses:
+        '200': { description: 'OK' }
+        '422': { description: 'Validation Error' }
+
+components:
+  schemas:
+    LoginRequest:           { type: object }
+    VerifyOtpRequest:       { type: object }
+    GAuthRequest:           { type: object }
+    BookingRequestRequest:  { type: object }
+    ConfirmBookingRequest:  { type: object }
+    BookingActionRequest:   { type: object }
+    GetRoomsRequest:        { type: object }

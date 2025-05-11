@@ -1,0 +1,54 @@
+.stat-value {
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.chart-section {
+  margin-top: 24px;
+}
+
+.chart-section-controls {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.room-section {
+  margin-top: 32px;
+}
+.room-type-section {
+  margin-bottom: 24px;
+}
+.room-type-title {
+  margin-bottom: 12px;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.table-uniform-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+.table-uniform-wrapper {
+  width: 100%;
+}
+.table-uniform-wrapper .ant-table table {
+  table-layout: fixed;
+}
+.table-uniform-wrapper .ant-table-cell {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Make sure all reservation tables are consistent */
+.reservations-table-container {
+  width: 100%;
+  margin-bottom: 24px;
+}
+.reservations-table-container .ant-table table {
+  table-layout: fixed;
+}
