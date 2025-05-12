@@ -33,7 +33,11 @@ function getAuthToken() {
  * Clear the authentication token.
  */
 function clearAuthToken() {
-    localStorage.removeItem('authToken');
+    // localStorage.removeItem('_grecaptcha')
+    // localStorage.removeItem('authToken');
+    // localStorage.removeItem('authToken_expires')
+    // localStorage.removeItem('username');
+    localStorage.clear()
 }
 
 /**

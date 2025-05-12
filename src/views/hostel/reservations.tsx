@@ -15,6 +15,7 @@ const ReservationsPage: React.FC = () => {
   const [isAddModalVisible, setIsAddModalVisible] = useState(false);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [currentRequest, setCurrentRequest] = useState<ReservationRequest | null>(null);
+  const [cancelledIds, setCancelledIds] = useState<string[]>([]);
   const [form] = Form.useForm();
   const [addForm] = Form.useForm();
   const [editForm] = Form.useForm();
@@ -28,6 +29,11 @@ const ReservationsPage: React.FC = () => {
   const checkOut = useHostelStore(state => state.checkOutReservation);
   const cancelRes = useHostelStore(state => state.cancelReservation);
   const rooms = useRooms();
+  const today = dayjs().startOf('day');
+  const filteredRequestData = requestData.filter(req => {
+    const reqFrom = dayjs(req.from).startOf('day');
+    return reqFrom.isAfter(today) || reqFrom.isSame(today);
+  });
   // Determine allocation options: same type first, then higher types, then lower types
   const roomTypeOrder = ['Standard', 'Deluxe', 'Executive'];
   const allocationRooms = React.useMemo(() => {
@@ -87,7 +93,7 @@ const ReservationsPage: React.FC = () => {
               status: 'accept',
               rooms: values.rooms.map((roomNumber: number) => {
                 const room = rooms.find(r => r.number === roomNumber);
-                return room ? { id: room.key, room_number: room.number, type: room.type } : null;
+                return room ? { id: room.key, room_number: String(room.number), type: room.type } : null;
               }).filter(Boolean),
               reason: 'Approved',
               status_reason: 'Approved'
@@ -153,6 +159,24 @@ const ReservationsPage: React.FC = () => {
     }
   };
 
+  // Cancel reservation (API call)
+  const handleCancel = async (record: Reservation) => {
+    const reason = window.prompt('Cancellation reason:');
+    if (reason) {
+      try {
+        await apiRequest('/booking/booking-action', {
+          method: 'POST',
+          body: { booking_id: record.id, action: 'cancel', reason }
+        }, true);
+        record.rooms.forEach(room => cancelRes(room, record.guest, reason));
+        setCancelledIds(prev => [...prev, record.id]);
+        message.success('Booking cancelled');
+      } catch (e: any) {
+        message.error('Failed to cancel booking: ' + e.message);
+      }
+    }
+  };
+
   // Handlers for Edit Request
   const onEditClick = (req: ReservationRequest) => {
     setCurrentRequest(req);
@@ -186,17 +210,16 @@ const ReservationsPage: React.FC = () => {
       setIsEditModalVisible(false);
     });
   };
-
+  console.log(rooms);
   const columns: ColumnsType<Reservation> = [
-    { title: 'Count', key: 'count', render: (_, record) => record.rooms.length },
-    { title: 'Rooms', dataIndex: 'rooms', key: 'rooms', render: (rooms: number[]) => rooms.join(', ') },
+    { title: 'Room Numbers', dataIndex: 'rooms', key: 'rooms', render: (rooms: number[]) => rooms && rooms.length ? rooms.join(', ') : '-' },
     { title: 'Guest', dataIndex: 'guest', key: 'guest' },
     { title: 'From', dataIndex: 'from', key: 'from' },
     { title: 'To', dataIndex: 'to', key: 'to' },
     {
       title: 'Status', dataIndex: 'status', key: 'status', render: status => {
         let color = 'blue';
-        if (status === 'Checked-In') color = 'green';
+        if (status === 'CheckedIn') color = 'green';
         if (status === 'Cancelled') color = 'red';
         if (status === 'Reserved') color = 'gold';
         return <Tag color={color}>{status}</Tag>;
@@ -208,25 +231,11 @@ const ReservationsPage: React.FC = () => {
           return (
             <>
               <Button icon={<CheckOutlined />} type="link" onClick={() => handleCheckIn(record)}>Check-In</Button>
-              <Button icon={<CloseCircleOutlined />} type="link" danger onClick={async () => {
-                const reason = window.prompt('Cancellation reason:');
-                if (reason) {
-                  try {
-                    await apiRequest('/booking/booking-action', {
-                      method: 'POST',
-                      body: { booking_id: record.id, action: 'cancel', reason }
-                    }, true);
-                    record.rooms.forEach(room => cancelRes(room, record.guest, reason));
-                    message.success('Booking cancelled');
-                  } catch (e: any) {
-                    message.error('Failed to cancel booking: ' + e.message);
-                  }
-                }
-              }}>Cancel</Button>
+              <Button icon={<CloseCircleOutlined />} type="link" danger onClick={() => handleCancel(record)}>Cancel</Button>
             </>
           );
         }
-        if (record.status === 'Checked-In') {
+        if (record.status === 'CheckedIn') {
           return (
             <Button icon={<LogoutOutlined />} type="link" onClick={() => handleCheckOut(record)}>Check-Out</Button>
           );
@@ -254,8 +263,14 @@ const ReservationsPage: React.FC = () => {
         </>
       )
     }
-  ];
-
+  ];  // Only approved/rejected reservations should appear on Dashboard
+  // This includes all reservations with a valid status (they've already been moved from requests)
+  const approvedReservations = reservationData.filter(res => {
+    return (
+      (res.status === 'Reserved' || res.status === 'CheckedIn') &&
+      !cancelledIds.includes(res.id)
+    );
+  });
   return (
     <div>
       <h2>Reservations</h2>
@@ -263,16 +278,20 @@ const ReservationsPage: React.FC = () => {
         <Tabs.TabPane tab="Dashboard" key="dashboard">
           <Table
             columns={columns}
-            dataSource={reservationData}
-            rowKey={r => r.rooms.join('-') + r.guest}
+            dataSource={approvedReservations}
+            rowKey="id"
             size="small"
           />
-        </Tabs.TabPane>
-        <Tabs.TabPane tab="Requests" key="requests">
-          <Button icon={<PlusOutlined />} type="primary" style={{ marginBottom: 16 }} onClick={showAddModal}>Add Request</Button>
+        </Tabs.TabPane>        <Tabs.TabPane tab={<>Requests <Tag color="blue">{filteredRequestData.length}</Tag></>} key="requests">
+          <div className="request-actions-container">
+            <Button icon={<PlusOutlined />} type="primary" onClick={showAddModal}>Add Request</Button>
+            {filteredRequestData.length > 0 && (
+              <span className="request-note"><i>Note: Requests appear here until accepted or rejected, then move to the Dashboard.</i></span>
+            )}
+          </div>
           <Table
             columns={requestColumns}
-            dataSource={requestData}
+            dataSource={filteredRequestData}
             rowKey="id"
             size="small"
           />

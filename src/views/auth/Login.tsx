@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './Login.css';
 import '../../utils/google-login';
 import { Typography } from 'antd';
@@ -15,8 +16,32 @@ declare global {
 
 const Login: React.FC = () => {
   const googleDiv = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+
+  const initializeGoogleLogin = () => {
+    if (window.google && window.google.accounts && googleDiv.current) {
+      window.google.accounts.id.initialize({
+        client_id: "464794475879-742k1rji25rb0bg25lp0cv0c9l5n1ljj.apps.googleusercontent.com",
+        callback: window.handleCredentialResponse,
+        ux_mode: "popup",
+      });
+      window.google.accounts.id.renderButton(googleDiv.current, {
+        theme: "filled_black",
+        size: "large",
+        text: "sign_in_with",
+        shape: "rectangular",
+        logo_alignment: "left",
+      });
+    }
+  };
 
   useEffect(() => {
+    // Redirect if authtoken exists
+    if (localStorage.getItem('authToken')) {
+      navigate('/');
+      return;
+    }
+
     // Dynamically add reCAPTCHA script only on login
     let recaptchaScript = document.getElementById('recaptcha-script');
     if (!recaptchaScript) {
@@ -28,30 +53,20 @@ const Login: React.FC = () => {
       document.head.appendChild(recaptchaScript);
     }
 
-    // Wait for the GSI script to be loaded
-    if (window.google && window.google.accounts && googleDiv.current) {
-      window.google.accounts.id.initialize({
-        client_id: "464794475879-742k1rji25rb0bg25lp0cv0c9l5n1ljj.apps.googleusercontent.com",
-        callback: window.handleCredentialResponse,
-        login_uri: "localhost:5501/login",
-        ux_mode: "redirect"
-      });
-      window.google.accounts.id.renderButton(googleDiv.current, {
-        theme: "filled_black",
-        size: "large",
-        text: "sign_in_with",
-        shape: "rectangular",
-        logo_alignment: "left"
-      });
-    }
+    const interval = setInterval(() => {
+      if (window.google && window.google.accounts) {
+        initializeGoogleLogin();
+        clearInterval(interval);
+      }
+    }, 500);
 
     return () => {
-      // Remove reCAPTCHA script when leaving login page
+      clearInterval(interval);
       if (recaptchaScript && recaptchaScript.parentNode) {
         recaptchaScript.parentNode.removeChild(recaptchaScript);
       }
     };
-  }, []);
+  }, [navigate]);
 
   return (
     <section className="login-section">
