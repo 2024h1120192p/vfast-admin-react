@@ -52,4 +52,6 @@ export default createBrowserRouter([
     ),
     children: routes,
   },
-]);
+],{
+  "basename" : "/admin/"
+});

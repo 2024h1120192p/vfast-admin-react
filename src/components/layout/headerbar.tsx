@@ -3,6 +3,7 @@ import useConfigStore from '../../store/config';
 import { LogoutOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import './headerbar.css';
+import { clearAuthToken } from '../../utils/api-client';
 const { Header } = Layout;
 
 const Headerbar = (props: { colorBgContainer: string }) => {
@@ -11,8 +12,7 @@ const Headerbar = (props: { colorBgContainer: string }) => {
   const username = localStorage.getItem('username') || 'User';
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('username');
+    clearAuthToken()
     message.info('Logged out');
     navigate('/login');
   }
