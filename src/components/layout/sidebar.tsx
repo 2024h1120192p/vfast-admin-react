@@ -51,6 +51,7 @@ const PageSidebar = (props: {
 
   return (
     <Sider theme='light'>
+      <img src="https://www.bits-pilani.ac.in/wp-content/uploads/bits-pillani-2-1.webp" alt="BITS Pilani Logo" style={{width:"90%", margin:"8px", padding:"10px", background:"#FFFF", borderRadius:"3px"}} />
       <Menu openKeys={lastOpenedMenu} onOpenChange={onOpenChange} selectedKeys={selectedKeys} mode="inline" items={menuItems} onClick={onSwitchMenu} />
     </Sider>
   )
