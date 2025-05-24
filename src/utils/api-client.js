@@ -1,4 +1,4 @@
-const BASE_URL = 'http://vfast.devmaster.in/api/v1';
+const BASE_URL = '/api/v1';
 
 /**
  * Decode a JWT token and return the payload.
