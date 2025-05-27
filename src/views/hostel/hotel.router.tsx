@@ -1,15 +1,23 @@
 import { DesktopOutlined } from '@ant-design/icons';
 import type { AdminRouterItem } from '../../router';
-import HotelDashboard from './index';
-import RoomsPage from './rooms';
-import ReservationsPage from './reservations';
-import CustomersPage from './customers';
+import { lazy, Suspense } from 'react';
+
+// Lazy-loaded views for code-splitting
+const HotelDashboard = lazy(() => import('./index'));
+const RoomsPage = lazy(() => import('./rooms'));
+const ReservationsPage = lazy(() => import('./reservations'));
+const CustomersPage = lazy(() => import('./customers'));
+const CalendarView = lazy(() => import('./calendarView'));
 
 // Top-level hotel pages as separate tabs
 const hotelRoutes: AdminRouterItem[] = [
   {
     path: 'dashboard',
-    element: <HotelDashboard />,  
+    element: (
+      <Suspense fallback={<div>Loading Dashboard...</div>}>
+        <HotelDashboard />
+      </Suspense>
+    ),  
     meta: {
       label: 'Dashboard',
       title: 'Hotel Dashboard',
@@ -19,7 +27,11 @@ const hotelRoutes: AdminRouterItem[] = [
   },
   {
     path: 'rooms',
-    element: <RoomsPage />,  
+    element: (
+      <Suspense fallback={<div>Loading Rooms...</div>}>
+        <RoomsPage />
+      </Suspense>
+    ),  
     meta: {
       label: 'Rooms',
       title: 'Rooms',
@@ -29,7 +41,11 @@ const hotelRoutes: AdminRouterItem[] = [
   },
   {
     path: 'reservations',
-    element: <ReservationsPage />,  
+    element: (
+      <Suspense fallback={<div>Loading Reservations...</div>}>
+        <ReservationsPage />
+      </Suspense>
+    ),  
     meta: {
       label: 'Reservations',
       title: 'Reservations',
@@ -39,11 +55,29 @@ const hotelRoutes: AdminRouterItem[] = [
   },
   {
     path: 'customers',
-    element: <CustomersPage />,  
+    element: (
+      <Suspense fallback={<div>Loading Customers...</div>}>
+        <CustomersPage />
+      </Suspense>
+    ),  
     meta: {
       label: 'Customers',
       title: 'Customers',
       key: '/customers',
+      icon: <DesktopOutlined />,
+    }
+  },
+  {
+    path: 'calendar',
+    element: (
+      <Suspense fallback={<div>Loading Calendar...</div>}>
+        <CalendarView />
+      </Suspense>
+    ),
+    meta: {
+      label: 'Calendar',
+      title: 'Reservation Calendar',
+      key: '/calendar',
       icon: <DesktopOutlined />,
     }
   }

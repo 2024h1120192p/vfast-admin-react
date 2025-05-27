@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { Row, Col, Card, Table, Select } from 'antd';
 import {
   HomeOutlined,
@@ -22,6 +22,8 @@ dayjs.extend(isBetween);
 import './index.css';
 import useHostelStore, { Reservation } from '../../store/hostelStore';
 import useConfigStore from '../../store/config';
+
+const CalendarView = lazy(() => import('./calendarView'));
 
 const HotelDashboard: React.FC = () => {
   // Dashboard metrics
@@ -192,4 +194,14 @@ const HotelDashboard: React.FC = () => {
   );
 };
 
-export default HotelDashboard;
+export {
+  CalendarView,
+};
+
+export default function HostelIndex() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <HotelDashboard />
+    </Suspense>
+  );
+}
