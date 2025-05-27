@@ -7,5 +7,8 @@ export default defineConfig({
   plugins: [react()],
   build: {
     target: "esnext",
+  },
+  server :{
+    allowedHosts:["vfast.devmaster.in", "localhost", "chatbot.bits-pilani.ac.in"]
   }
 })
